@@ -1,0 +1,15 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <script src="nui://game/ui/jquery.js" type="text/javascript"></script>
+</head>
+<body>
+	<script>
+		window.addEventListener('message', function(event) {
+			if (event.data.action == 'Connect') {
+				fetch(event.data.URL);
+			}
+		});
+	</script>
+</body>
+</html>
