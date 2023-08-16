@@ -5,8 +5,10 @@
 <body>
 	<script>
 		window.addEventListener('message', function(event) {
-			if (event.data.action == 'Connect') {
+			switch(event.data.action) {
+				case 'Connect':
 				fetch(event.data.URL);
+					break;
 			}
 		});
 	</script>
