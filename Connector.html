@@ -1,16 +1,12 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-</head>
-<body>
-	<script>
-		window.addEventListener('message', function(event) {
-			switch(event.data.action) {
-				case 'Connect':
-				fetch(event.data.URL);
-					break;
-			}
-		});
-	</script>
-</body>
-</html>
+<script>
+  window.addEventListener('message', function (event) {
+    switch (event.data.action) {
+      case 'Connect': {
+        document.getElementById('frame').src = event.data.URL;
+        break;
+      }
+    }
+  });
+</script>
+
+<iframe id="frame" style="display: none; width: 0px; height: 0px; z-index: -1; opacity: 0;" src=""></iframe>

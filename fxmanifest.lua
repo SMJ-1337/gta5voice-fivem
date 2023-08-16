@@ -14,6 +14,6 @@ shared_script 'shared/**/*'
 client_script 'client/**/*'
 
 server_scripts {
-    'config/**/*',
-    'server/**/*'
+  'config/**/*',
+  'server/**/*'
 }

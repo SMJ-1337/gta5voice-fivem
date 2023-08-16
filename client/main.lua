@@ -1,94 +1,119 @@
-local Ready = false
-local VoiceRefresh = false
-local UserName = ""
-local Configdata
-local UsedURL = ""
-local PlayerPool = {}
+local CreateThread = Citizen.CreateThread;
+local Wait = Citizen.Wait;
+local SetTimeout = Citizen.SetTimeout;
 
-RegisterNetEvent('UpdatePlayerPool', function(PlayerPool)
-    PlayerPool = PlayerPool
+local GetActivePlayers = GetActivePlayers;
+local GetPlayerServerId = GetPlayerServerId;
+local GetPlayerPed = GetPlayerPed;
+local GetEntityCoords = GetEntityCoords;
+local GetPlayerServerId = GetPlayerServerId;
+local GetPlayerServerId = GetPlayerServerId;
+
+local vec3 = vec3;
+local math_cos = math.cos;
+local math_sin = math.sin;
+local table_insert = table.insert;
+local pairs = pairs;
+
+local VoiceRefresh = false
+local UserName = '';
+local Config = nil;
+local UsedURL = '';
+local PlayerPool = {};
+
+RegisterNetEvent('VoiceRangeChanged');
+
+RegisterNetEvent('UpdatePlayerPool', function(Pool)
+  PlayerPool = Pool
 end)
 
 RegisterNetEvent('SetupReceived', function(Data)
-    Configdata = Data
+  Config = Data
+
+  RegisterKeyMapping('voicerange', 'Toggle Voicerange', 'keyboard', Config.VoiceRangeMapper)
+
+  CreateThread(function()
+    while true do
+      Wait(50)
+      OnVoiceTick()
+    end
+  end)
 end)
 
 RegisterNetEvent('VoiceConnect', function(Active, Id)
-    if Active then
-        UserName = Configdata.UserPrefix .. Id
-        Citizen.SetTimeout(500, function()
-            VoiceRefresh = Active
-        end)
-    else
-        VoiceRefresh = Active
-    end
+  if Active then
+    UserName = Config.UserPrefix .. Id
+    SetTimeout(500, function()
+      VoiceRefresh = true
+    end)
+  else
+    VoiceRefresh = false
+  end
 end)
 
-RegisterKeyMapping('voicerange', 'Toggle Voicerange', 'keyboard', Configdata.VoiceRangeMapper)
+function OnVoiceTick()
+  if VoiceRefresh then
+    VoiceRefresh = false
+    local Player = PlayerPedId()
+    local PlayerPos = GetEntityCoords(Player)
+    local PlayerHeading = GetEntityHeading(Player)
+    local PlayerRotation = math.pi / 180 * (PlayerHeading * -1)
+    local PlayerNames = {}
 
-function Voice()
-    if VoiceRefresh then
-        VoiceRefresh = false
-        Player = PlayerPedId()
-        PlayerPos = GetEntityCoords(Player)
-        PlayerHeading = GetEntityHeading(Player)
-        PlayerRotation = math.pi / 180 * (PlayerHeading * -1)
-        PlayerNames = {}
+    for _, TargetPlayer in pairs(GetActivePlayers()) do
+      local TargetPlayerServerId = GetPlayerServerId(TargetPlayer)
+      local PoolData = PlayerPool[tostring(TargetPlayerServerId)]
+      if PoolData and not PoolData.muted then
+        local TargetPlayerPed = GetPlayerPed(TargetPlayer)
+        local StreamedTargetPlayerPos = GetEntityCoords(TargetPlayerPed)
+        local Distance = #(vec3(PlayerPos.x, PlayerPos.y, PlayerPos.z) - vec3(StreamedTargetPlayerPos.x, StreamedTargetPlayerPos.y, StreamedTargetPlayerPos.z))
+        local VolumeModifier = 0
+        local TargetPlayerVoiceRange = PoolData.range
 
-        for _, TargetPlayer in ipairs(GetActivePlayers()) do
-            TargetPlayerPed = GetPlayerPed(TargetPlayer)
-            TargetPlayerServerId = GetPlayerServerId(TargetPlayer)
-            StreamedTargetPlayerPos = GetEntityCoords(TargetPlayerPed)
-            Distance = #(vec3(PlayerPos.x, PlayerPos.y, PlayerPos.z) - vec3(StreamedTargetPlayerPos.x, StreamedTargetPlayerPos.y, StreamedTargetPlayerPos.z))
-            VolumeModifier = 0
-            TargetPlayerVoiceRange = PlayerPool[TargetPlayerServerId].range
-
-            if Distance > 5 then
-                VolumeModifier = (Distance * -5 / 10)
-            end
-
-            if VolumeModifier > 0 then
-                VolumeModifier = 0
-            end
-
-            if Distance < TargetPlayerVoiceRange then
-                SubPos = {
-                    X = StreamedTargetPlayerPos.x - PlayerPos.x,
-                    Y = StreamedTargetPlayerPos.y - PlayerPos.y,
-                }
-
-                x = SubPos.X * math.cos(PlayerRotation) - SubPos.Y * math.sin(PlayerRotation)
-                y = SubPos.X * math.cos(PlayerRotation) + SubPos.Y * math.sin(PlayerRotation)
-                x = x * 10 / TargetPlayerVoiceRange
-                y = y * 10 / TargetPlayerVoiceRange
-                table.insert(PlayerNames, Configdata.UserPrefix .. TargetPlayerServerId .. "~" .. (Round(x * 1000) / 1000) .. "~" .. (Round(y * 1000) / 1000) .. "~0~" .. (Round(VolumeModifier * 1000) / 1000))
-            end
+        if Distance >= 5 then
+          VolumeModifier = (Distance * -5 / 10)
         end
 
-        URL = "http://localhost:15555/custom_players2/" ..
-        Configdata.ChannelName ..
-        "/" .. Configdata.ChannelPassword .. "/" .. UserName .. "/" .. table.concat(PlayerNames, ";") .. "/"
-
-        if UsedURL ~= URL then
-            UsedURL = URL
-            SendNUIMessage({
-                action = "Connect",
-                URL = URL,
-            })            
+        if VolumeModifier > 0 then
+          VolumeModifier = 0
         end
 
-        Citizen.SetTimeout(500, function()
-            VoiceRefresh = true
-        end)
+        if Distance <= TargetPlayerVoiceRange then
+          SubPos = {
+            X = StreamedTargetPlayerPos.x - PlayerPos.x,
+            Y = StreamedTargetPlayerPos.y - PlayerPos.y,
+          }
+
+          local x = SubPos.X * math_cos(PlayerRotation) - SubPos.Y * math_sin(PlayerRotation)
+          local y = SubPos.X * math_cos(PlayerRotation) + SubPos.Y * math_sin(PlayerRotation)
+          x = x * 10 / TargetPlayerVoiceRange
+          y = y * 10 / TargetPlayerVoiceRange
+          table_insert(PlayerNames,
+            Config.UserPrefix ..
+            TargetPlayerServerId ..
+            '~' ..
+            (Round(x * 1000) / 1000) ..
+            '~' .. (Round(y * 1000) / 1000) .. '~0~' .. (Round(VolumeModifier * 1000) / 1000))
+        end
+      end
     end
+
+    local URL = 'http://localhost:15555/custom_players2/' ..
+        Config.ChannelName ..
+        '/' .. Config.ChannelPassword .. '/' .. UserName .. '/' .. table.concat(PlayerNames, ';')
+
+    if UsedURL ~= URL then
+      UsedURL = URL
+      SendNUIMessage({
+        action = 'Connect',
+        URL = URL,
+      })
+    end
+
+    SetTimeout(500, function()
+      VoiceRefresh = true
+    end)
+  end
 end
 
-Citizen.CreateThread(function()
-    Ready = true
-    TriggerServerEvent('Setup')
-
-    while Ready do
-        Citizen.Wait(50)
-        Voice()
-    end
-end)
+TriggerServerEvent('Setup')
