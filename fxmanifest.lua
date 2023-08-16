@@ -6,8 +6,8 @@ author 'SMJ52'
 description 'GtaVoice'
 version 'v1.0'
 
-ui_page 'WebSocket.html'
-file 'WebSocket.html'
+ui_page 'Connector.html'
+file 'Connector.html'
 
 shared_script 'shared/**/*'
 
