@@ -1,8 +1,8 @@
 <script>
   window.addEventListener('message', function (event) {
     switch (event.data.action) {
-      case 'Connect': {
-        document.getElementById('frame').src = event.data.URL;
+      case 'SetFrameUrl': {
+        document.getElementById('frame').src = event.data.url;
         break;
       }
     }

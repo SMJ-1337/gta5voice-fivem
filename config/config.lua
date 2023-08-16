@@ -8,4 +8,4 @@ Config = {
     15.0
   },
   VoiceRangeMapper = 'Y',
-}
+};
