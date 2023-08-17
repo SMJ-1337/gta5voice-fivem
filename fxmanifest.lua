@@ -1,10 +1,10 @@
 fx_version 'cerulean'
-game 'gta5'
+games { 'rdr3', 'gta5' }
 lua54 'yes'
 
-author 'SMJ52'
-description 'GtaVoice'
-version 'v1.0'
+author 'SMJ-1337 & ardelan869'
+description 'FiveM implementation for the already existing TS3-Plugin, gta5voice.'
+version '1.1'
 
 ui_page 'Connector.html'
 file 'Connector.html'
