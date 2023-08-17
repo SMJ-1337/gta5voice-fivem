@@ -1,14 +1,9 @@
 local IsDrawingRangeCircle = false;
-AddEventHandler('VoiceRangeChanged', function(range, index)
+AddEventHandler('gta5voice:VoiceRangeChanged', function(range, index)
   IsDrawingRangeCircle = false;
   Wait(0);
   local Reset = true;
-
-  SendNUIMessage({
-    action = 'SetVoice',
-    value = index
-  });
-
+    
   IsDrawingRangeCircle = true;
   CreateThread(function()
     local DrawMarker = DrawMarker;
