@@ -5,6 +5,12 @@ local gta5voice = {
   PlayerPool = {},
 };
 
+-- Game Natives
+local DropPlayer = DropPlayer;
+
+-- Lua Globals
+local tostring = tostring;
+
 -- add the player to the player pool
 RegisterNetEvent('gta5voice:PlayerConnected', function()
   local source = source;

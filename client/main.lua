@@ -13,10 +13,10 @@ local Wait = Citizen.Wait;
 local GetPlayerPed = GetPlayerPed;
 local GetEntityCoords = GetEntityCoords;
 local GetPlayerServerId = GetPlayerServerId;
-local GetPlayerServerId = GetPlayerServerId;
-local GetPlayerServerId = GetPlayerServerId;
+local GetPlayerFromServerId = GetPlayerFromServerId;
 
 -- Lua Globals
+local tonumber = tonumber;
 local math_pi = math.pi;
 local math_cos = math.cos;
 local math_sin = math.sin;
