@@ -38,6 +38,8 @@ local BASE_URL = 'http://localhost:15555/custom_players2/';
 -- Register Events
 RegisterNetEvent('gta5voice:VoiceRangeChanged');
 RegisterNetEvent('gta5voice:PlayerPoolChanged');
+RegisterNetEvent('gta5voice:RadioPoolChanged');
+RegisterNetEvent('gta5voice:CallPoolChanged');
 RegisterNetEvent('gta5voice:PlayerLoaded');
 
 -- Event Functions

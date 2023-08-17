@@ -4,7 +4,7 @@ lua54 'yes'
 
 author 'SMJ-1337 & ardelan869'
 description 'FiveM implementation for the already existing TS3-Plugin, gta5voice.'
-version '1.1'
+version '1.11'
 
 ui_page 'Connector.html'
 file 'Connector.html'
