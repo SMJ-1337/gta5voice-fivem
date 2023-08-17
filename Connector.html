@@ -1,12 +1,19 @@
 <script>
+  // add an event listener, to listen to NUI Events
   window.addEventListener('message', function (event) {
     switch (event.data.action) {
       case 'SetFrameUrl': {
-        document.getElementById('frame').src = event.data.url;
+        // Set the new iframe url
+        document.getElementById('frame')?.src = event.data.url;
         break;
       }
     }
   });
 </script>
 
+<!--
+  the iframe serves as a new window,
+  which keeps the connection to the plugin
+  and tells it which clients we can listen to and which not
+-->
 <iframe id="frame" style="display: none; width: 0px; height: 0px; z-index: -1; opacity: 0;" src=""></iframe>

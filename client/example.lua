@@ -3,7 +3,7 @@ AddEventHandler('gta5voice:VoiceRangeChanged', function(range, index)
   IsDrawingRangeCircle = false;
   Wait(0);
   local Reset = true;
-    
+
   IsDrawingRangeCircle = true;
   CreateThread(function()
     local DrawMarker = DrawMarker;

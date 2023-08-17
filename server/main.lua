@@ -9,7 +9,11 @@ local gta5voice = {
 local DropPlayer = DropPlayer;
 
 -- Lua Globals
+local type = type;
 local tostring = tostring;
+local table_insert = table.insert;
+local table_remove = table.remove;
+local pairs = pairs;
 
 -- add the player to the player pool
 RegisterNetEvent('gta5voice:PlayerConnected', function()
@@ -37,7 +41,7 @@ RegisterNetEvent('gta5voice:PlayerConnected', function()
 end)
 
 -- Toggle increment voice range for specified player
-local toggleVoiceRange = function(player)
+local function toggleVoiceRange(player)
   local source = tostring(player);
 
   -- loop through all voice ranges, that have been configured
@@ -67,8 +71,9 @@ local toggleVoiceRange = function(player)
     end
   end
 end
-
+-- register a command for the function
 RegisterCommand('toggleVoiceRange', toggleVoiceRange, false);
+-- export the function
 exports('toggleVoiceRange', toggleVoiceRange);
 
 AddEventHandler('playerDropped', function()
@@ -98,7 +103,7 @@ AddEventHandler('playerDropped', function()
       end
 
       -- remove the player from the player pool
-      table.remove(gta5voice.PlayerPool, Index);
+      table_remove(gta5voice.PlayerPool, Index);
       break;
     end
   end
@@ -110,7 +115,7 @@ AddEventHandler('playerDropped', function()
       -- check if source is matching
       if tostring(s) == source then
         -- source matched, so it gets removed
-        table.remove(gta5voice.CallPool[tostring(RadioId)], _);
+        table_remove(gta5voice.CallPool[tostring(RadioId)], _);
         break;
       end
     end
@@ -123,7 +128,7 @@ AddEventHandler('playerDropped', function()
       -- check if source is matching
       if tostring(s) == source then
         -- source matched, so it gets removed
-        table.remove(gta5voice.RadioPool[tostring(CallId)], _);
+        table_remove(gta5voice.RadioPool[tostring(CallId)], _);
         break;
       end
     end
@@ -138,7 +143,7 @@ exports('MutePlayer', function(target, bool)
   gta5voice.PlayerPool[source]?.muted = bool;
 end)
 
-local addPlayerToPool = function(target, id, poolData)
+local function addPlayerToPool(target, id, poolData)
   -- turning the id and source to a string, to use as a table key
   local value = tostring(id);
   local source = tostring(target);
@@ -149,7 +154,7 @@ local addPlayerToPool = function(target, id, poolData)
   end
 
   -- insert the original source to the pool
-  table.insert(gta5voice[poolData.name][value], target);
+  table_insert(gta5voice[poolData.name][value], target);
 
   -- update the player data
   gta5voice.PlayerPool[source][poolData.value] = value;

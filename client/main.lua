@@ -20,6 +20,10 @@ local tonumber = tonumber;
 local math_pi = math.pi;
 local math_cos = math.cos;
 local math_sin = math.sin;
+local math_floor = math.floor;
+local function math_round(value)
+  return math_floor(value + 0.5);
+end
 local table_insert = table.insert;
 local table_concat = table.concat;
 local pairs = pairs;
@@ -52,15 +56,19 @@ end);
 AddEventHandler('gta5voice:PlayerLoaded', function(Data)
   Config = Data;
 
+  -- add key assignment for the voice range command
   RegisterKeyMapping('toggleVoiceRange', 'Toggle Voicerange', 'keyboard', Config.VoiceRangeMapper);
 
+  -- set the clients user name
   UserName = Config.UserPrefix .. UserId;
-  Wait(500);
 
+  -- initiate the main thread
   CreateThread(function()
     while true do
+      -- trigger main voice function
       OnVoiceTick();
-      Wait(550);
+      -- tick all 200ms
+      Wait(200);
     end
   end);
 end);
@@ -74,62 +82,94 @@ function gta5voice.ChangeURL(URL)
 end
 
 function OnVoiceTick()
+  -- define player position, ped, etc
+  -- used to compare distance, etc
   local Player = PlayerPedId();
   local PlayerPos = GetEntityCoords(Player);
   local PlayerHeading = GetEntityHeading(Player);
   local PlayerRotation = math_pi / 180 * (PlayerHeading * -1);
+  -- init the PlayerNames table, were all voice clients get stored
   local PlayerNames = {};
+  -- define current client pool data as MyPool
   local MyPool = gta5voice.PlayerPool[tostring(UserId)];
 
+  -- Loop through the PlayerPool
   for str_Target, PoolData in pairs(gta5voice.PlayerPool) do
-    local TargetServerId = tonumber(str_Target) or -1;
-    local Target = GetPlayerFromServerId(TargetServerId);
+    -- check if the current player is the current client
+    if str_Target ~= tostring(UserId) then
+      -- define the client and server id for the current player
+      local TargetServerId = tonumber(str_Target) or -1;
+      local Target = GetPlayerFromServerId(TargetServerId);
 
-    if PoolData and not PoolData.muted then
-      local TargetPed = GetPlayerPed(Target);
-      local TargetPos = GetEntityCoords(TargetPed);
-      local Distance = #(PlayerPos - TargetPos);
-      local TargetVoiceRange = PoolData.range;
+      -- if the data exists and the player isn't muted then proceed
+      if PoolData and not PoolData.muted then
+        local TargetPed = GetPlayerPed(Target);
 
-      if Distance <= TargetVoiceRange then
-        local VolumeModifier = 0;
+        -- check if the player is in my range/stream (what ever) and if he has a ped
+        if NetworkIsPlayerActive(Target) and DoesEntityExist(TargetPed) then
+          -- define player pos, distance and voice range
+          local TargetPos = GetEntityCoords(TargetPed);
+          local Distance = #(PlayerPos - TargetPos);
+          local TargetVoiceRange = PoolData.range;
 
-        if Distance >= 5 then
-          VolumeModifier = (Distance * -5 / 10);
+          -- check if the player is hearable for the current client,
+          -- by comparing my distance to him with his voice range
+          if Distance <= TargetVoiceRange then
+            local VolumeModifier = 0;
+
+            -- if the distance is greater or equals 5 then modify the volume to be quieter
+            if Distance >= 5 then
+              VolumeModifier = (Distance * -5 / 10);
+            end
+
+            -- if the volume somehow exceeds 0, reset it to 0
+            if VolumeModifier > 0 then
+              VolumeModifier = 0;
+            end
+
+            -- define a table including the distance on x and y from the current client to the current player
+            local SubPos = {
+              X = TargetPos.x - PlayerPos.x,
+              Y = TargetPos.y - PlayerPos.y,
+            };
+
+            -- do some math sh*t to define where the audio is coming from, etc
+            local x = SubPos.X * math_cos(PlayerRotation) - SubPos.Y * math_sin(PlayerRotation);
+            local y = SubPos.X * math_cos(PlayerRotation) + SubPos.Y * math_sin(PlayerRotation);
+
+            x = x * 10 / TargetVoiceRange;
+            y = y * 10 / TargetVoiceRange;
+
+            -- define the player "Name", for the url to use as a parameter
+            local Name = PoolData.name ..
+                '~' ..
+                (math_round(x * 1000) / 1000) ..
+                '~' .. (math_round(y * 1000) / 1000) .. '~0~' .. (math_round(VolumeModifier * 1000) / 1000);
+
+            -- insert it to the PlayerNames table, which we created before
+            table_insert(PlayerNames, Name);
+          else
+            -- if the player isn't anywhere near us, or we aren't able to hear him,
+            -- because our distance exceeds his voice range,
+            -- then check if the client and the player are connected in a call and in the same call
+            if
+                (PoolData.callId and PoolData.callId == MyPool.callId) or
+                (PoolData.radioId and PoolData.radioId == MyPool.radioId)
+            then
+              -- if so then insert him to the PlayerNames table
+              table_insert(PlayerNames, PoolData.name .. '~10~0~0~3');
+            end
+          end
         end
-
-        if VolumeModifier > 0 then
-          VolumeModifier = 0;
-        end
-
-        SubPos = {
-          X = TargetPos.x - PlayerPos.x,
-          Y = TargetPos.y - PlayerPos.y,
-        };
-
-        local x = SubPos.X * math_cos(PlayerRotation) - SubPos.Y * math_sin(PlayerRotation);
-        local y = SubPos.X * math_cos(PlayerRotation) + SubPos.Y * math_sin(PlayerRotation);
-
-        x = x * 10 / TargetVoiceRange;
-        y = y * 10 / TargetVoiceRange;
-
-        local Name = PoolData.name ..
-            '~' ..
-            (Round(x * 1000) / 1000) .. '~' .. (Round(y * 1000) / 1000) .. '~0~' .. (Round(VolumeModifier * 1000) / 1000);
-
-        table_insert(PlayerNames, Name);
-      elseif
-          (PoolData.callId and PoolData.callId == MyPool.callId) or
-          (PoolData.radioId and PoolData.radioId == MyPool.radioId)
-      then
-        table_insert(PlayerNames, PoolData.name .. '~10~0~0~3');
       end
     end
   end
 
+  -- define the "new iFrame url"
   local URL = BASE_URL ..
       Config.ChannelName .. '/' .. Config.ChannelPassword .. '/' .. UserName .. '/' .. table_concat(PlayerNames, ';');
 
+  -- if the "new iFrame url" doesnt match the old one, then change it
   if LastURL ~= URL then
     LastURL = URL;
 
