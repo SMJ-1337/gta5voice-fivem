@@ -1,5 +1,5 @@
 -- Initiate the pool tables
-local gta5voice = {
+gta5voice = {
   CallPool = {},
   RadioPool = {},
   PlayerPool = {},
@@ -33,6 +33,7 @@ RegisterNetEvent('gta5voice:PlayerConnected', function()
     name = Config.UserPrefix .. source,
     callId = nil,
     radioId = nil,
+    radioActive = false,
   })
 
   -- send the config to the new client
@@ -73,16 +74,42 @@ local function toggleVoiceRange(player)
   end
 end
 -- register a command for the function
-RegisterCommand('toggleVoiceRange', toggleVoiceRange, false);
+RegisterNetEvent('gta5voice:cmd:toggleVoiceRange', function()
+  toggleVoiceRange(source);
+end)
 -- export the function
 exports('toggleVoiceRange', toggleVoiceRange);
+
+-- register events for the radio
+-- this command is executed on press
+RegisterNetEvent('gta5voice:cmd:pressedRadio', function()
+  local s = source;
+  local index = GetTableIndexBySource(s);
+  -- set the player as talking on the radio
+  gta5voice.PlayerPool[index].radioActive = true;
+  -- send all clients the new player pool
+  TriggerClientEvent('gta5voice:PlayerPoolChanged', -1, gta5voice.PlayerPool);
+end);
+
+-- and this on release
+RegisterNetEvent('gta5voice:cmd:releasedRadio', function()
+  local s = source;
+  local index = GetTableIndexBySource(s);
+  -- set the player as non talking on the radio
+  gta5voice.PlayerPool[index].radioActive = false;
+  -- send all clients the new player pool
+  TriggerClientEvent('gta5voice:PlayerPoolChanged', -1, gta5voice.PlayerPool);
+end);
 
 -- Exports
 -- Mute specified player for the whole server
 exports('MutePlayer', function(target, bool)
   local index = GetTableIndexBySource(target);
 
+  -- set the specified bool for the muted value
   gta5voice.PlayerPool[index].muted = bool;
+  -- send all clients the new player pool
+  TriggerClientEvent('gta5voice:PlayerPoolChanged', -1, gta5voice.PlayerPool);
 end)
 
 local function addPlayerToPool(target, id, poolData)
@@ -102,8 +129,9 @@ local function addPlayerToPool(target, id, poolData)
   gta5voice.PlayerPool[index][poolData.value] = value;
 
   -- update the call/radio pool for all clients
-  -- this event is simply for implementation in other scripts
+  -- these events are simply for implementation in other scripts
   TriggerClientEvent('gta5voice:' .. poolData.name .. 'Changed', -1, gta5voice[poolData.name]);
+  TriggerClientEvent('gta5voice:RadioChannelChanged', target, value);
   -- update the player pool for all clients
   TriggerClientEvent('gta5voice:PlayerPoolChanged', -1, gta5voice.PlayerPool);
 end
@@ -129,8 +157,9 @@ local function removePlayerFromPool(target, id, poolData)
   gta5voice.PlayerPool[index][poolData.value] = nil;
 
   -- update the call/radio pool for all clients
-  -- this event is simply for implementation in other scripts
+  -- these events are simply for implementation in other scripts
   TriggerClientEvent('gta5voice:' .. poolData.name .. 'Changed', -1, gta5voice[poolData.name]);
+  TriggerClientEvent('gta5voice:RadioChannelChanged', target, nil);
   -- update the player pool for all clients
   TriggerClientEvent('gta5voice:PlayerPoolChanged', -1, gta5voice.PlayerPool);
 end

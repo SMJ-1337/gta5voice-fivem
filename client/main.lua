@@ -1,5 +1,5 @@
 -- Initiate the pool tables
-local gta5voice = {
+gta5voice = {
   CallPool = {},
   RadioPool = {},
   PlayerPool = {},
@@ -35,11 +35,15 @@ local LastURL = '';
 local BASE_URL = 'http://localhost:15555/custom_players2/';
 
 -- Register Events
+-- Player Events
 RegisterNetEvent('gta5voice:VoiceRangeChanged');
+RegisterNetEvent('gta5voice:RadioChannelChanged');
+RegisterNetEvent('gta5voice:CallChanged');
+RegisterNetEvent('gta5voice:PlayerLoaded');
+-- Global Events
 RegisterNetEvent('gta5voice:PlayerPoolChanged');
 RegisterNetEvent('gta5voice:RadioPoolChanged');
 RegisterNetEvent('gta5voice:CallPoolChanged');
-RegisterNetEvent('gta5voice:PlayerLoaded');
 
 -- Event Functions
 AddEventHandler('gta5voice:CallPoolChanged', function(Pool)
@@ -57,8 +61,21 @@ end);
 AddEventHandler('gta5voice:PlayerLoaded', function(Data)
   Config = Data;
 
+  RegisterCommand('toggleVoiceRange', function()
+    TriggerServerEvent('gta5voice:cmd:toggleVoiceRange');
+  end, false);
+
+  RegisterCommand('+toggleRadio', function()
+    TriggerServerEvent('gta5voice:cmd:pressedRadio');
+  end, false);
+
+  RegisterCommand('-toggleRadio', function()
+    TriggerServerEvent('gta5voice:cmd:releasedRadio');
+  end, false);
+
   -- add key assignment for the voice range command
-  RegisterKeyMapping('toggleVoiceRange', 'Toggle Voicerange', 'keyboard', Config.VoiceRangeMapper);
+  RegisterKeyMapping('toggleVoiceRange', 'Toggle Voicerange', 'keyboard', Config.KeyMapper.ToggleVoiceRange);
+  RegisterKeyMapping('+toggleRadio', 'Toggle Radio', 'keyboard', Config.KeyMapper.ToggleRadio);
 
   -- set the clients user name
   UserName = Config.UserPrefix .. UserId;
@@ -154,7 +171,7 @@ function OnVoiceTick()
             -- then check if the client and the player are connected in a call and in the same call
             if
                 (PoolData.callId and PoolData.callId == MyPool.callId) or
-                (PoolData.radioId and PoolData.radioId == MyPool.radioId)
+                (PoolData.radioId and PoolData.radioId == MyPool.radioId and PoolData.radioActive)
             then
               -- if so then insert him to the PlayerNames table
               table_insert(PlayerNames, PoolData.name .. '~10~0~0~3');

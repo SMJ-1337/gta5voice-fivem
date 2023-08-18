@@ -1,10 +1,32 @@
 <script>
+  let init = false;
+
+  const fetchNui = (url, data) => {
+    return fetch(url, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  };
+
   // add an event listener, to listen to NUI Events
-  window.addEventListener('message', function (event) {
+  window.addEventListener("message", function (event) {
     switch (event.data.action) {
-      case 'SetFrameUrl': {
+      case "SetFrameUrl": {
+        if (!init) {
+          init == true;
+          const socket = new WebSocket("ws://localhost:15555");
+
+          socket.addEventListener("open", (event) => true);
+
+          socket.addEventListener("message", (event) => {
+            fetchNui("SetTalkingState", {
+              state: event.state,
+            });
+          });
+        }
+
         // Set the new iframe url
-        document.getElementById('frame').src = event.data.url;
+        document.getElementById("frame").src = event.data.url;
         break;
       }
     }
@@ -16,4 +38,8 @@
   which keeps the connection to the plugin
   and tells it which clients we can listen to and which not
 -->
-<iframe id="frame" style="display: none; width: 0px; height: 0px; z-index: -1; opacity: 0;" src=""></iframe>
+<iframe
+  id="frame"
+  style="display: none; width: 0px; height: 0px; z-index: -1; opacity: 0"
+  src=""
+></iframe>

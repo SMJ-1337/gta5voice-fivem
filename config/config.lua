@@ -7,5 +7,8 @@ Config = {
     8.0,
     15.0
   },
-  VoiceRangeMapper = 'Y',
+  KeyMapper = {
+    ToggleVoiceRange = 'Y',
+    ToggleRadio = 'CAPSLOCK',
+  }
 };
