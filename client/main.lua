@@ -16,7 +16,6 @@ local GetPlayerServerId = GetPlayerServerId;
 local GetPlayerFromServerId = GetPlayerFromServerId;
 
 -- Lua Globals
-local tonumber = tonumber;
 local math_pi = math.pi;
 local math_cos = math.cos;
 local math_sin = math.sin;
@@ -79,7 +78,7 @@ end);
 function gta5voice.ChangeURL(URL)
   SendNUIMessage({
     action = 'SetFrameUrl',
-    url = URL,
+    url = URL
   });
 end
 
@@ -93,15 +92,14 @@ function OnVoiceTick()
   -- init the PlayerNames table, were all voice clients get stored
   local PlayerNames = {};
   -- define current client pool data as MyPool
-  local MyPool = gta5voice.PlayerPool[tostring(UserId)];
+  local MyPool = gta5voice.PlayerPool[GetTableIndexBySource(UserId)];
 
   -- Loop through the PlayerPool
-  for str_Target, PoolData in pairs(gta5voice.PlayerPool) do
+  for _, PoolData in pairs(gta5voice.PlayerPool) do
     -- check if the current player is the current client
-    if str_Target ~= tostring(UserId) then
+    if PoolData.source ~= UserId then
       -- define the client and server id for the current player
-      local TargetServerId = tonumber(str_Target) or -1;
-      local Target = GetPlayerFromServerId(TargetServerId);
+      local Target = GetPlayerFromServerId(PoolData.source);
 
       -- if the data exists and the player isn't muted then proceed
       if PoolData and not PoolData.muted then

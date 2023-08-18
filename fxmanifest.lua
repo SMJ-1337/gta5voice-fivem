@@ -9,6 +9,8 @@ version '1.11'
 ui_page 'Connector.html'
 file 'Connector.html'
 
+shared_script 'shared/**/*'
+
 client_script 'client/**/*'
 
 server_scripts {
