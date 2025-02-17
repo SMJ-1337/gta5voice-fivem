@@ -13,7 +13,7 @@
     switch (event.data.action) {
       case "SetFrameUrl": {
         if (!init) {
-          init == true;
+          init = true;
           const socket = new WebSocket("ws://localhost:15555");
 
           socket.addEventListener("open", (event) => true);
